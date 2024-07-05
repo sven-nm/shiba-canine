@@ -12,11 +12,14 @@ from shiba import Shiba, CodepointTokenizer
 MAX_JP_CODEPOINT = 0x9faf
 EVAL_DATA_PERCENT = 0.02
 
+
 @dataclass
 class DataArguments:
-    data: str = field(
-        default=None, metadata={"help": "The location of the Japanese wiki data to use for training."}
-    )
+    # data: str = field(
+    #         default=None, metadata={"help": "The location of the Japanese wiki data to use for training."}
+    # )
+    data_dir: str = field(
+            default=None, metadata={"help": "The location of the Japanese wiki data to use for training."})
 
 
 @dataclass
@@ -35,17 +38,17 @@ class ShibaTrainingArguments(TrainingArguments):
     deepspeed: Optional = field(default=None)
     warmup_ratio: Optional[float] = 0.025  # from canine
 
-    per_device_eval_batch_size: Optional[int] = field(default=12)
-    per_device_train_batch_size: Optional[int] = field(default=12)
+    per_device_eval_batch_size: Optional[int] = field(default=2)
+    per_device_train_batch_size: Optional[int] = field(default=2)
     # max that we can fit on one GPU is 12. 12 * 21 * 8 = 2016
-    gradient_accumulation_steps: Optional[int] = field(default=21)
+    # gradient_accumulation_steps: Optional[int] = field(default=21)
 
     # model arguments - these have to be in training args for the hyperparam search
     dropout: Optional[float] = field(
-        default=0.1
+            default=0.1
     )
     deep_transformer_stack_layers: Optional[int] = field(
-        default=12
+            default=12
     )
     local_attention_window: Optional[int] = field(default=128)
 
@@ -100,7 +103,7 @@ def get_base_shiba_state_dict(state_dict: Dict) -> Dict:
 
 
 def prepare_data(args: DataArguments) -> Tuple[Dataset, Dataset]:
-    all_data = load_dataset('json', data_files=args.data)['train']
+    all_data = load_dataset('json', data_files=args.data)['train']  # Dataset shoud come as a JSONL file
     data_dict = all_data.train_test_split(train_size=0.98, seed=42)
     training_data = data_dict['train']
     dev_data = data_dict['test']

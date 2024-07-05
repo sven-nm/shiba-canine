@@ -55,6 +55,13 @@ def random_mask(input_ids: torch.Tensor, attention_mask: torch.tensor,
     indices_to_mask = torch.stack(indices_to_mask)
     masked_indices = torch.full(labels.shape, False).scatter(1, indices_to_mask, torch.full(labels.shape, True))
 
+    # masked_indices = []
+    # for indices_to_mask_row, label_row in zip(indices_to_mask, labels):
+    #     masked_indices.append(torch.full(label_row.shape, False).scatter(1, indices_to_mask_row, torch.full(label_row.shape, True)))
+    #
+    # masked_indices = torch.stack(masked_indices)
+
+
     # 80% of the time, we replace masked input tokens with mask token
     indices_replaced = torch.bernoulli(torch.full(labels.shape, 0.8)).bool() & masked_indices
     input_ids[indices_replaced] = CodepointTokenizer.MASK
@@ -186,7 +193,7 @@ def random_span_mask(input_ids: torch.Tensor, attention_mask: torch.Tensor, repl
         row_span_locations = row_span_locations[torch.randperm(row_span_locations.shape[0])[:num_spans]]
         span_locations_per_row.append(row_span_locations)
 
-        row_masked_indices = torch.cat([row_span_locations] + [row_span_locations+x for x in range(1, span_length)])
+        row_masked_indices = torch.cat([row_span_locations] + [row_span_locations + x for x in range(1, span_length)])
         row_masked_indices = maskable_indices[row_masked_indices]
         masked_indices_per_row.append(row_masked_indices[torch.randperm(row_masked_indices.shape[0])])
 
@@ -224,7 +231,7 @@ def random_span_mask(input_ids: torch.Tensor, attention_mask: torch.Tensor, repl
 
             # get a random replacement of span length from
             replacements = torch.tensor([[ord(c) for c in random.choice(replacement_vocab[span_length])]
-                                        for i in range(spans.shape[0])])
+                                         for i in range(spans.shape[0])])
 
             input_ids[row_idx][spans] = replacements
 

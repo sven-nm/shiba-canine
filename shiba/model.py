@@ -442,4 +442,7 @@ class ShibaForAutoregressiveLanguageModeling(ShibaForMaskedLanguageModeling):
                                                                       self.shiba_model.config.attention_heads,
                                                                       dim_feedforward=self.shiba_model.config.transformer_ff_size,
                                                                       dropout=self.shiba_model.config.dropout,
-                                                                      activation=self.shiba_model.config.activation)
+                                                                      activation=self.shiba_model.config.activation,
+                                                                      batch_first=True)
+
+
