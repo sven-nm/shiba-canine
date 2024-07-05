@@ -1,3 +1,12 @@
+# Shiba-canine
+
+This repo is forked from [octanove/shiba](https://github.com/octanove/shiba) and modified to be used with HuggingFace's
+Transformers' implementation of Canine. It notably includes a class `CanineForAutoregressiveLanguageModeling` that can
+be used to train Canine on autoregressive language modeling tasks, which wasn't release. The changes done to the
+original repo are notably in `training/prepare_data_canine.py` and `training/train_canine.py`. See the comments in the
+code for more details.
+
+
 # What is SHIBA?
 
 SHIBA is an approximate reimplementation of CANINE[[1]](#1) in raw Pytorch, pretrained on the Japanese wikipedia corpus using random span masking. If you are unfamiliar with CANINE, you can think of it as a very efficient (approximately 4x as efficient) character-level BERT model. Of course, the name SHIBA comes from the identically named Japanese canine. 
