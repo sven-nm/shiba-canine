@@ -1,11 +1,12 @@
+# Todo ⚠️ VOCABULARY SIZE IS NOT CORRECT AND HAS TO BE FIXED FOR GREEK (see todos)
 import os
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 os.environ["WORLD_SIZE"] = "1"
 from transformers import CanineModel, CanineTokenizer
 
 from typing import Optional, Tuple, Dict
 import torch
-
 
 import transformers
 from transformers import HfArgumentParser, Trainer
@@ -62,7 +63,10 @@ class CanineRandomMaskingDataCollator:
 
     def __call__(self, batch: typing.List[dict]) -> Dict[str, torch.Tensor]:
         # 🚧 Here we change the tokenizer.pad as it is not available in CanineTokenizer
-        batch = {k: torch.tensor([example[k] for example in batch]) for k in batch[0].keys()}
+        batch = {'input_ids': torch.tensor([x['input_ids'] + [0] * (2048 * len(x['input_ids'])) for x in batch]),
+                 'attention_mask': torch.tensor([[1] * len(x['input_ids']) + [0] * (2048 - len(x['input_ids'])) for x in batch]),
+                 'token_type_ids': torch.zeros((len(batch), 2048)),
+                 }
 
         input_ids, labels, masked_indices = random_mask(batch['input_ids'],
                                                         batch['attention_mask'],
@@ -145,3 +149,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+# ⚠️⚠️⚠️ Todo VOCABULARY SIZE IS NOT CORRECT AND HAS TO BE FIXED FOR GREEK (see todos) ️⚠️⚠️⚠️
