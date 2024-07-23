@@ -31,15 +31,17 @@ class ShibaTrainingArguments(TrainingArguments):
     logging_first_step: Optional[bool] = field(default=True)
     learning_rate: Optional[float] = 0.001
 
-    logging_steps: Optional[int] = field(default=200)
+    logging_steps: Optional[int] = field(default=1000)
     report_to: Optional[List[str]] = field(default_factory=lambda: ['wandb'])
     evaluation_strategy: Optional[str] = field(default='steps')
     fp16: Optional[bool] = field(default=torch.cuda.is_available())
     deepspeed: Optional = field(default=None)
-    warmup_ratio: Optional[float] = 0.025  # from canine
+    warmup_ratio: Optional[float] = 0.0025  # from canine
 
-    per_device_eval_batch_size: Optional[int] = field(default=2)
-    per_device_train_batch_size: Optional[int] = field(default=2)
+    num_epochs: Optional[int] = field(default=5)
+
+    per_device_eval_batch_size: Optional[int] = field(default=16)
+    per_device_train_batch_size: Optional[int] = field(default=16)
     # max that we can fit on one GPU is 12. 12 * 21 * 8 = 2016
     # gradient_accumulation_steps: Optional[int] = field(default=21)
 

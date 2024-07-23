@@ -1,8 +1,8 @@
-# Todo ⚠️ VOCABULARY SIZE IS NOT CORRECT AND HAS TO BE FIXED FOR GREEK (see todos)
 import os
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# os.environ["WORLD_SIZE"] = "1"
+# os.environ["WANDB_DISABLED"] = "true"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-os.environ["WORLD_SIZE"] = "1"
 from transformers import CanineModel, CanineTokenizer
 
 from typing import Optional, Tuple, Dict
@@ -13,11 +13,12 @@ from transformers import HfArgumentParser, Trainer
 from datasets import load_dataset, Dataset
 
 import typing
-from training.helpers import MAX_JP_CODEPOINT, DataArguments, prepare_data, \
-    ShibaTrainingArguments, get_model_hyperparams
+from training.helpers import DataArguments, ShibaTrainingArguments, get_model_hyperparams
 from training.masking import RandomSpanMaskingDataCollator, RandomMaskingDataCollator, random_mask
 from shiba import ShibaForAutoregressiveLanguageModeling, CodepointTokenizer
 
+
+MAX_GR_CODEPOINT = 8191
 
 class CanineForAutoregressiveLanguageModeling(ShibaForAutoregressiveLanguageModeling):
 
@@ -32,6 +33,7 @@ class CanineForAutoregressiveLanguageModeling(ShibaForAutoregressiveLanguageMode
                 attention_mask: torch.Tensor,
                 token_type_ids: torch.Tensor,
                 predict_indices: torch.Tensor) -> Tuple:
+
         # Here we want canine's last hidden state BEFORE the final transformer
         upsampled_embeddings = self.shiba_model(input_ids,
                                                 attention_mask,
@@ -63,9 +65,9 @@ class CanineRandomMaskingDataCollator:
 
     def __call__(self, batch: typing.List[dict]) -> Dict[str, torch.Tensor]:
         # 🚧 Here we change the tokenizer.pad as it is not available in CanineTokenizer
-        batch = {'input_ids': torch.tensor([x['input_ids'] + [0] * (2048 * len(x['input_ids'])) for x in batch]),
+        batch = {'input_ids': torch.tensor([x['input_ids'] + [0] * (2048 - len(x['input_ids'])) for x in batch]),
                  'attention_mask': torch.tensor([[1] * len(x['input_ids']) + [0] * (2048 - len(x['input_ids'])) for x in batch]),
-                 'token_type_ids': torch.zeros((len(batch), 2048)),
+                 'token_type_ids': torch.zeros((len(batch), 2048)).long(),
                  }
 
         input_ids, labels, masked_indices = random_mask(batch['input_ids'],
@@ -87,7 +89,9 @@ def prepare_data(args: DataArguments) -> Tuple[Dataset, Dataset]:
     all_data = load_dataset('json', data_dir=args.data_dir, split='train')
     data_dict = all_data.train_test_split(train_size=0.98, seed=42)
     training_data = data_dict['train']
+    training_data = training_data.shuffle(seed=42)
     dev_data = data_dict['test']
+    dev_data = dev_data.shuffle(seed=42)
     return training_data, dev_data
 
 
@@ -95,9 +99,10 @@ def main():
     transformers.logging.set_verbosity_info()
     parser = HfArgumentParser((DataArguments, ShibaTrainingArguments))
 
-    data_args, training_args = parser.parse_dict({'data_dir': '/scratch/sven/canine/pre_training_data/',
-                                                  'output_dir': '/scratch/sven/canine/output/',
-                                                  'masking_type': 'rand_char'})
+    data_args, training_args = parser.parse_dict({'data_dir': '/home/najem/dhlab-data/data/najem-data/canine/pre_training_data',
+                                                  'output_dir': '/home/najem/dhlab-data/data/najem-data/canine/output',
+                                                  'masking_type': 'rand_char',
+                                                  })
 
     # torch.cuda.set_device(1)
     # Set our own training parameters
@@ -118,7 +123,7 @@ def main():
         print('Random character masking')
         # char range: https://stackoverflow.com/a/30200250/4243650
         # we aren't including half width stuff
-        data_collator = CanineRandomMaskingDataCollator(range(0, MAX_JP_CODEPOINT))  # todo fix this
+        data_collator = CanineRandomMaskingDataCollator(range(1, MAX_GR_CODEPOINT))
     else:
         raise RuntimeError('Unknown masking type')
 
@@ -126,7 +131,7 @@ def main():
     training_data, dev_data = prepare_data(data_args)
     model_hyperparams = get_model_hyperparams(training_args)
 
-    model = CanineForAutoregressiveLanguageModeling(MAX_JP_CODEPOINT, **model_hyperparams)
+    model = CanineForAutoregressiveLanguageModeling(MAX_GR_CODEPOINT, **model_hyperparams)
 
     checkpoint_dir = None
     if training_args.resume_from_checkpoint:
@@ -149,4 +154,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-# ⚠️⚠️⚠️ Todo VOCABULARY SIZE IS NOT CORRECT AND HAS TO BE FIXED FOR GREEK (see todos) ️⚠️⚠️⚠️

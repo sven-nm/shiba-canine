@@ -40,7 +40,7 @@ def random_mask(input_ids: torch.Tensor, attention_mask: torch.tensor,
     labels = input_ids.clone()
     input_ids = input_ids.clone()
     special_tokens_mask = _special_tokens_mask_from_range(input_ids, range(MIN_SPECIAL_TOKEN, MAX_SPECIAL_TOKEN))
-    special_tokens_mask = special_tokens_mask | attention_mask.bool()
+    special_tokens_mask = special_tokens_mask | ~attention_mask.bool()
     mask_count = math.floor(input_ids.shape[1] * masking_percent)
 
     indices_to_mask = []
@@ -54,13 +54,6 @@ def random_mask(input_ids: torch.Tensor, attention_mask: torch.tensor,
     # masked_indices is a boolean mask indicating whether indices are targets for masking
     indices_to_mask = torch.stack(indices_to_mask)
     masked_indices = torch.full(labels.shape, False).scatter(1, indices_to_mask, torch.full(labels.shape, True))
-
-    # masked_indices = []
-    # for indices_to_mask_row, label_row in zip(indices_to_mask, labels):
-    #     masked_indices.append(torch.full(label_row.shape, False).scatter(1, indices_to_mask_row, torch.full(label_row.shape, True)))
-    #
-    # masked_indices = torch.stack(masked_indices)
-
 
     # 80% of the time, we replace masked input tokens with mask token
     indices_replaced = torch.bernoulli(torch.full(labels.shape, 0.8)).bool() & masked_indices
