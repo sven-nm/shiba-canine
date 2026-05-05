@@ -100,13 +100,13 @@ def main():
     parser = HfArgumentParser((DataArguments, ShibaTrainingArguments))
 
     data_args, training_args = parser.parse_dict({'data_dir': '/home/najem/dhlab-data/data/najem-data/canine/pre_training_data',
-                                                  'output_dir': '/home/najem/dhlab-data/data/najem-data/canine/output',
+                                                  'output_dir': '/home/najem/dhlab-data/data/najem-data/canine/outputs_v2',
                                                   'masking_type': 'rand_char',
                                                   })
 
     # torch.cuda.set_device(1)
     # Set our own training parameters
-    training_args.num_train_epochs = 10
+    training_args.num_train_epochs = 3
 
     # 🚧 Here we change the tokenizer to CanineTokenizer
     tokenizer = CanineTokenizer.from_pretrained("google/canine-c")
